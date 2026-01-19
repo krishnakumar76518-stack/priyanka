@@ -1,2 +1,519 @@
-# priyanka
-....
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IMS Shop — Full Demo (Cart, Wishlist, Auth, Admin, Seller)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>tailwind.config = { theme: { extend: { colors: { primary: '#E91E63' } } } };</script>
+  <style>
+    html,body,#app{height:100%}
+    .hero-slide{position:absolute;inset:0;object-fit:cover;width:100%;height:100%;opacity:0;transition:opacity 1000ms ease-in-out}
+    .hero-slide.active{opacity:1}
+    .preloader{position:fixed;inset:0;background:white;display:flex;align-items:center;justify-content:center;z-index:60}
+    .dark .bg-white{background:#0b1220}
+    .dark .text-gray-900{color:#e6eef8}
+    .stat-card{padding:1rem;border-radius:0.75rem;box-shadow:0 8px 20px rgba(2,6,23,0.06)}
+    .badge{background:#E91E63;color:#fff;padding:2px 8px;border-radius:999px;font-size:12px}
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900" id="app">
+  <div id="preloader" class="preloader">
+    <div class="text-center">
+      <svg class="animate-spin h-12 w-12 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle><path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="4" stroke-linecap="round" class="opacity-75"></path></svg>
+      <div class="mt-3 font-semibold">Loading IMS Panel...</div>
+    </div>
+  </div>
+  <div id="app-root" class="min-h-screen hidden">
+    <header class="fixed top-0 left-0 right-0 bg-white shadow z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-4">
+            <button id="sidebar-toggle" class="p-2 rounded hover:bg-gray-100"><i data-lucide="menu"></i></button>
+            <a class="flex items-center gap-3" href="#" onclick="event.preventDefault(); showHome()">
+              <img src="https://placehold.co/40x40/E91E63/fff?text=IMS" alt="logo" class="w-10 h-10 rounded" />
+              <div class="hidden sm:block">
+                <div class="font-bold text-lg">IMS Shop</div>
+                <div class="text-xs text-gray-500">Inventory + Shopping</div>
+              </div>
+            </a>
+          </div>
+          <div class="flex items-center gap-3">
+            <div id="searchWrap" class="hidden md:flex items-center gap-2">
+              <input id="globalSearch" class="px-3 py-2 border rounded-lg w-72" placeholder="Search products, categories..." />
+              <select id="sortBy" class="px-3 py-2 border rounded-lg">
+                <option value="default">Sort</option>
+                <option value="price_asc">Price: Low → High</option>
+                <option value="price_desc">Price: High → Low</option>
+                <option value="sold_desc">Top Selling</option>
+              </select>
+              <button id="searchBtn" class="px-3 py-2 bg-primary text-white rounded-lg">Search</button>
+            </div>
+            <button id="darkToggle" class="p-2 rounded hover:bg-gray-100" title="Toggle dark"><i data-lucide="moon"></i></button>
+            <button id="ordersBtn" class="p-2 rounded hover:bg-gray-100 relative" title="Orders"><i data-lucide="archive"></i><span id="ordersBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">0</span></button>
+            <button id="cartBtn" class="p-2 rounded hover:bg-gray-100 relative" title="Cart"><i data-lucide="shopping-cart"></i><span id="cartBadge" class="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full px-1">0</span></button>
+            <button id="wishBtn" class="p-2 rounded hover:bg-gray-100 relative" title="Wishlist"><i data-lucide="heart"></i><span id="wishBadge" class="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full px-1">0</span></button>
+            <button id="profileBtn" class="p-2 rounded hover:bg-gray-100"><i data-lucide="user"></i></button>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div class="pt-16 flex min-h-[calc(100vh-4rem)]">
+      <aside id="sidebar" class="w-64 bg-white border-r p-4 hidden md:block">
+        <nav class="space-y-2">
+          <button class="w-full text-left p-2 rounded hover:bg-gray-50 navlink" data-view="home"><i data-lucide="home" class="inline mr-2"></i> Home</button>
+          <button class="w-full text-left p-2 rounded hover:bg-gray-50 navlink" data-view="products"><i data-lucide="boxes" class="inline mr-2"></i> Products</button>
+          <button class="w-full text-left p-2 rounded hover:bg-gray-50 navlink" data-view="add"><i data-lucide="plus-square" class="inline mr-2"></i> Add Product</button>
+          <button class="w-full text-left p-2 rounded hover:bg-gray-50 navlink" data-view="seller"><i data-lucide="users" class="inline mr-2"></i> Seller Dashboard</button>
+          <button class="w-full text-left p-2 rounded hover:bg-gray-50 navlink" data-view="orders"><i data-lucide="shopping-bag" class="inline mr-2"></i> Orders</button>
+          <button class="w-full text-left p-2 rounded hover:bg-gray-50 navlink" data-view="analytics"><i data-lucide="activity" class="inline mr-2"></i> Analytics</button>
+          <button class="w-full text-left p-2 rounded hover:bg-gray-50 navlink" data-view="reports"><i data-lucide="bar-chart-2" class="inline mr-2"></i> Reports</button>
+          <button id="logoutBtn" class="w-full text-left p-2 rounded hover:bg-gray-50 text-red-600 mt-4"><i data-lucide="log-out" class="inline mr-2"></i> Logout</button>
+        </nav>
+        <div class="mt-6">
+          <h4 class="text-sm text-gray-500 mb-2">Quick Filters</h4>
+          <select id="filterCategory" class="w-full p-2 border rounded mb-2"><option value="">All categories</option></select>
+          <div class="flex gap-2"><input id="filterMinPrice" placeholder="Min" class="w-1/2 p-2 border rounded" type="number" /><input id="filterMaxPrice" placeholder="Max" class="w-1/2 p-2 border rounded" type="number" /></div>
+          <div class="mt-2"><label class="flex items-center gap-2"><input id="filterLowStock" type="checkbox" /> Only low stock (&lt;5)</label></div>
+          <button id="applyFilters" class="mt-3 w-full px-3 py-2 bg-primary text-white rounded">Apply Filters</button>
+        </div>
+      </aside>
+      <main class="flex-1 p-6">
+        <!-- VIEWS -->
+        <section id="view-login" class="max-w-md mx-auto mt-8 hidden">
+          <div class="bg-white p-6 rounded shadow">
+            <h2 class="text-2xl font-bold mb-4">IMS Demo — Login / Signup</h2>
+            <form id="loginForm" class="space-y-3">
+              <input id="loginUsername" class="w-full p-2 border rounded" placeholder="username" />
+              <input id="loginPassword" type="password" class="w-full p-2 border rounded" placeholder="password" />
+              <div class="flex items-center gap-2">
+                <select id="loginRole" class="p-2 border rounded">
+                  <option value="buyer">Buyer</option>
+                  <option value="seller">Seller</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <button id="loginBtn" class="px-4 py-2 bg-primary text-white rounded" type="submit">Login</button>
+                <button id="toSignup" type="button" class="px-4 py-2 border rounded">Signup</button>
+              </div>
+            </form>
+            <div id="loginError" class="mt-3 text-sm text-red-600 hidden">Invalid credentials.</div>
+          </div>
+        </section>
+        <section id="view-home" class="space-y-6">
+          <div class="relative h-48 rounded-2xl overflow-hidden shadow-lg">
+            <img class="hero-slide active" src="https://picsum.photos/1200/300?random=11" />
+            <div class="absolute left-6 bottom-6 bg-black bg-opacity-40 text-white p-6 rounded-lg">
+              <h2 class="text-2xl font-bold">Sell & Manage — All in one place</h2>
+              <p class="text-sm opacity-80 mt-1">A hybrid app combining shopping UX with inventory controls.</p>
+            </div>
+          </div>
+          <div class="flex gap-4 items-center">
+            <input id="quickSearch" class="flex-1 p-3 border rounded-lg" placeholder="Search by name, category, price..." />
+            <button id="quickSearchBtn" class="px-4 py-2 bg-primary text-white rounded-lg">Search</button>
+            <div class="flex items-center gap-2">
+              <button id="popularBtn" class="px-3 py-2 border rounded">Popular</button>
+              <button id="newBtn" class="px-3 py-2 border rounded">New</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4" id="productGrid"></div>
+        </section>
+        <!-- Manage Products -->
+        <section id="view-products" class="hidden">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Manage Products</h2>
+            <div class="flex gap-2">
+              <button id="showAddBtn" class="px-4 py-2 bg-primary text-white rounded">Add Product</button>
+              <button id="exportProducts" class="px-4 py-2 border rounded">Export CSV</button>
+            </div>
+          </div>
+          <div id="manageTable" class="bg-white p-4 rounded shadow overflow-auto"></div>
+        </section>
+        <!-- Seller Dashboard -->
+        <section id="view-seller" class="hidden">
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-2xl font-bold">Seller Dashboard</h2>
+            <div class="text-sm text-gray-500">Overview of your products & sales</div>
+          </div>
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="stat-card bg-white"><div class="text-sm text-gray-500">Your Products</div><div id="sTotalProducts" class="text-2xl font-bold">0</div></div>
+            <div class="stat-card bg-white"><div class="text-sm text-gray-500">Your Sales</div><div id="sTotalSales" class="text-2xl font-bold">₹0</div></div>
+            <div class="stat-card bg-white"><div class="text-sm text-gray-500">Low Stock</div><div id="sLowStock" class="text-2xl font-bold">0</div></div>
+          </div>
+          <div id="sellerProducts" class="bg-white p-4 rounded shadow"></div>
+        </section>
+        <!-- Add / Edit -->
+        <section id="view-add" class="hidden">
+          <h2 class="text-2xl font-bold mb-4">Add / Edit Product</h2>
+          <form id="productForm" class="bg-white p-4 rounded shadow max-w-2xl">
+            <input type="hidden" id="editId" />
+            <div class="grid grid-cols-2 gap-4">
+              <input id="fName" placeholder="Product name" class="p-2 border rounded" required />
+              <input id="fCategory" placeholder="Category" class="p-2 border rounded" />
+              <input id="fPrice" type="number" placeholder="Price" class="p-2 border rounded" />
+              <input id="fStock" type="number" placeholder="Stock" class="p-2 border rounded" />
+              <input id="fImage" placeholder="Image URL" class="p-2 border rounded col-span-2" />
+            </div>
+            <div class="mt-4 flex gap-2">
+              <button class="px-4 py-2 bg-primary text-white rounded">Save</button>
+              <button type="button" class="px-4 py-2 border rounded" onclick="cancelEdit()">Cancel</button>
+            </div>
+          </form>
+        </section>
+        <!-- Orders view -->
+        <section id="view-orders" class="hidden">
+          <h2 class="text-2xl font-bold mb-4">Orders</h2>
+          <div id="ordersTable" class="bg-white p-4 rounded shadow"></div>
+        </section>
+        <!-- Analytics -->
+        <section id="view-analytics" class="hidden">
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-2xl font-bold">Analytics</h2>
+            <div class="text-sm text-gray-500">Updated live from sales</div>
+          </div>
+          <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="stat-card bg-white"><div class="text-sm text-gray-500">Total Profit</div><div id="statProfit" class="text-2xl font-bold">₹0</div></div>
+            <div class="stat-card bg-white"><div class="text-sm text-gray-500">Total Loss</div><div id="statLoss" class="text-2xl font-bold">₹0</div></div>
+            <div class="stat-card bg-white"><div class="text-sm text-gray-500">High Demand</div><div id="statHigh" class="text-2xl font-bold">—</div></div>
+            <div class="stat-card bg-white"><div class="text-sm text-gray-500">Low Demand</div><div id="statLow" class="text-2xl font-bold">—</div></div>
+          </div>
+        </section>
+        <!-- Reports (new) -->
+        <section id="view-reports" class="hidden">
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-2xl font-bold">Reports & Transactions</h2>
+            <div class="flex gap-2">
+              <select id="reportsWarehouseFilter" class="p-2 border rounded"><option value="">All warehouses</option></select>
+              <button id="refreshReports" class="px-3 py-1 border rounded">Refresh</button>
+              <button id="downloadCSV" class="px-3 py-1 border rounded">Download CSV</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="stat-card bg-white"><div class="text-sm text-gray-500">Total Products</div><div id="rTotalProducts" class="text-2xl font-bold">0</div></div>
+            <div class="stat-card bg-white"><div class="text-sm text-gray-500">Total Categories</div><div id="rTotalCategories" class="text-2xl font-bold">0</div></div>
+            <div class="stat-card bg-white"><div class="text-sm text-gray-500">Paid Orders</div><div id="rPaidOrders" class="text-2xl font-bold">0</div></div>
+            <div class="stat-card bg-white"><div class="text-sm text-gray-500">Unpaid / Pending Orders</div><div id="rUnpaidOrders" class="text-2xl font-bold">0</div></div>
+          </div>
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-white p-4 rounded shadow">
+              <div class="text-sm text-gray-500 mb-2">Pending Cash Payments</div>
+              <div id="rPendingCash" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+              <div class="text-sm text-gray-500 mb-2">Total Transactions</div>
+              <div id="rTotalTransactions" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+              <div class="text-sm text-gray-500 mb-2">Warehouses</div>
+              <div id="rWarehouses" class="text-2xl font-bold">0</div>
+            </div>
+          </div>
+          <div class="mb-4">
+            <h3 class="text-lg font-bold mb-2">Transactions (Orders)</h3>
+            <div id="transactionsTable" class="bg-white p-4 rounded shadow overflow-auto max-h-64"></div>
+          </div>
+          <div class="mb-4">
+            <h3 class="text-lg font-bold mb-2">Payments</h3>
+            <div id="paymentsTable" class="bg-white p-4 rounded shadow overflow-auto max-h-64"></div>
+          </div>
+          <div class="mb-4">
+            <h3 class="text-lg font-bold mb-2">Warehouses</h3>
+            <div class="bg-white p-4 rounded shadow mb-3">
+              <div class="flex gap-2 items-center mb-3">
+                <input id="newWHName" placeholder="Warehouse name" class="p-2 border rounded" />
+                <input id="newWHLocation" placeholder="Location" class="p-2 border rounded" />
+                <button id="addWarehouseBtn" class="px-3 py-2 bg-primary text-white rounded">Add Warehouse</button>
+              </div>
+              <div id="warehousesTable" class="overflow-auto max-h-40"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <!-- Cart Drawer -->
+    <aside id="cartDrawer" class="fixed right-0 top-16 w-96 bg-white h-[calc(100%-4rem)] shadow-lg transform translate-x-full transition-transform z-50">
+      <div class="p-4 flex justify-between items-center border-b"><h3 class="font-semibold">Cart</h3><button id="closeCart"><i data-lucide="x"></i></button></div>
+      <div id="cartItemsContainer" class="p-4 overflow-auto h-[calc(100%-160px)]"></div>
+      <div class="p-4 border-t"><div class="flex justify-between mb-3"><div class="text-sm">Total</div><div id="cartTotal" class="font-bold">₹0</div></div><button id="placeOrder" class="w-full bg-primary text-white p-2 rounded">Place Order (Sim)</button></div>
+    </aside>
+    <!-- Wishlist Drawer -->
+    <aside id="wishDrawer" class="fixed right-0 top-16 w-80 bg-white h-[calc(100%-4rem)] shadow-lg transform translate-x-full transition-transform z-50">
+      <div class="p-4 flex justify-between items-center border-b"><h3 class="font-semibold">Wishlist</h3><button id="closeWish"><i data-lucide="x"></i></button></div>
+      <div id="wishItemsContainer" class="p-4 overflow-auto h-[calc(100%-120px)]"></div>
+    </aside>
+    <!-- Checkout / Payment Modal -->
+    <div id="modal" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-40 z-60">
+      <div class="bg-white p-4 rounded shadow max-w-md w-full">
+        <div id="modalTitle" class="font-bold mb-2"></div>
+        <div id="modalBody" class="mb-4"></div>
+        <div class="text-right"><button id="modalOk" class="px-3 py-1 bg-primary text-white rounded">OK</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="fixed bottom-4 left-4 z-60"><button id="openLoginQuick" class="px-3 py-2 bg-primary text-white rounded shadow">Open Login</button></div>
+  <script>
+  // -----------------------
+  // Demo state
+  // -----------------------
+  const STORAGE_KEY = 'ims_demo_full_v2';
+  const DEFAULT = {
+    users: [
+      { id:'u_admin', username:'admin', password:'admin123', role:'admin', name:'Admin User' },
+      { id:'u_seller', username:'seller', password:'seller123', role:'seller', name:'Demo Seller' },
+      { id:'u_buyer', username:'buyer', password:'buyer123', role:'buyer', name:'Demo Buyer' }
+    ],
+    warehouses: [
+      { id:'w1', name:'Main Warehouse', location:'Mumbai' },
+      { id:'w2', name:'Secondary WH', location:'Delhi' }
+    ],
+    products: [
+      { id:'p1', name:'Printed Dress', category:'Clothing', price:499, stock:12, image:'https://placehold.co/300x200/ef5678/fff?text=Dress', owner:'u_seller', sold:0, cost:300, warehouse:'w1' },
+      { id:'p2', name:'Gold Plated Necklace', category:'Jewellery', price:899, stock:5, image:'https://placehold.co/300x200/ffb400/fff?text=Necklace', owner:'u_seller', sold:0, cost:400, warehouse:'w1' },
+      { id:'p3', name:'Silk Scarf', category:'Accessories', price:199, stock:2, image:'https://placehold.co/300x200/7ed957/fff?text=Scarf', owner:'u_seller', sold:0, cost:80, warehouse:'w2' },
+      { id:'p4', name:'Running Shoes', category:'Footwear', price:1299, stock:25, image:'https://placehold.co/300x200/1fb6ff/fff?text=Shoes', owner:'u_seller', sold:0, cost:800, warehouse:'w1' },
+      { id:'p5', name:'Wireless Earbuds', category:'Electronics', price:1499, stock:8, image:'https://placehold.co/300x200/6f42c1/fff?text=Earbuds', owner:'u_seller', sold:0, cost:700, warehouse:'w2' }
+    ],
+    orders: [],
+    payments: [],
+    wishlist: [],
+    activity: [],
+    settings: { dark:false }
+  };
+  let STATE = { currentUser:null, users:[], products:[], orders:[], payments:[], wishlist:[], activity:[], warehouses:[], settings:{} };
+  let CART = [];
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const now = () => new Date().toLocaleString();
+  function save(){
+    const snapshot = {
+      users:STATE.users,
+      products:STATE.products,
+      orders:STATE.orders,
+      payments:STATE.payments,
+      wishlist:STATE.wishlist,
+      activity:STATE.activity,
+      warehouses:STATE.warehouses,
+      settings:STATE.settings
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+  }
+  function load(){
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw){
+      STATE.users = JSON.parse(JSON.stringify(DEFAULT.users));
+      STATE.products = JSON.parse(JSON.stringify(DEFAULT.products));
+      STATE.orders = [];
+      STATE.payments = [];
+      STATE.wishlist = [];
+      STATE.activity = ['System initialized at '+now()];
+      STATE.warehouses = JSON.parse(JSON.stringify(DEFAULT.warehouses));
+      STATE.settings = JSON.parse(JSON.stringify(DEFAULT.settings));
+      save();
+    } else {
+      const p = JSON.parse(raw);
+      STATE.users = p.users || JSON.parse(JSON.stringify(DEFAULT.users));
+      STATE.products = p.products || JSON.parse(JSON.stringify(DEFAULT.products));
+      STATE.orders = p.orders || [];
+      STATE.payments = p.payments || [];
+      STATE.wishlist = p.wishlist || [];
+      STATE.activity = p.activity || ['System initialized at '+now()];
+      STATE.warehouses = p.warehouses || JSON.parse(JSON.stringify(DEFAULT.warehouses));
+      STATE.settings = p.settings || JSON.parse(JSON.stringify(DEFAULT.settings));
+    }
+  }
+  window.addEventListener('load', ()=>{ setTimeout(()=>{ $('#preloader').style.display='none'; $('#app-root').classList.remove('hidden'); lucide.createIcons(); init(); }, 200); });
+  function init(){ load(); bindUI(); renderAll(); startHeroAutoplay(); if(STATE.settings.dark) document.documentElement.classList.add('dark'); }
+  function bindUI(){ lucide.createIcons(); $$('#sidebar .navlink').forEach(btn => btn.addEventListener('click', ()=>navigate(btn.dataset.view))); $('#sidebar-toggle').addEventListener('click', ()=>$('#sidebar').classList.toggle('hidden')); $('#globalSearch').addEventListener('keydown',(e)=>{ if(e.key==='Enter') applyGlobalSearch(); }); $('#searchBtn').addEventListener('click', applyGlobalSearch); $('#quickSearchBtn').addEventListener('click', applyQuickSearch); $('#quickSearch').addEventListener('keydown',(e)=>{ if(e.key==='Enter') applyQuickSearch(); }); $('#darkToggle').addEventListener('click', ()=>toggleDark()); $('#cartBtn').addEventListener('click', openCart); $('#closeCart').addEventListener('click', closeCart); $('#placeOrder').addEventListener('click', placeOrder); $('#wishBtn').addEventListener('click', openWish); $('#closeWish').addEventListener('click', closeWish); $('#applyFilters').addEventListener('click', applyFilters); $('#filterCategory').addEventListener('change', ()=>applyFilters()); $('#filterLowStock').addEventListener('change', ()=>applyFilters()); $('#filterMinPrice').addEventListener('change', ()=>applyFilters()); $('#filterMaxPrice').addEventListener('change', ()=>applyFilters()); $('#loginForm') && $('#loginForm').addEventListener('submit',(e)=>{ e.preventDefault(); login(); }); $('#openLoginQuick').addEventListener('click', ()=>navigateToLogin()); $('#showAddBtn') && $('#showAddBtn').addEventListener('click', ()=>navigate('add')); $('#productForm') && $('#productForm').addEventListener('submit',(e)=>{ e.preventDefault(); saveProductFromForm(); }); $('#modalOk').addEventListener('click', closeModal);
+    $('#exportProducts') && $('#exportProducts').addEventListener('click', ()=>downloadCSV(STATE.products, 'products.csv'));
+    $('#downloadCSV') && $('#downloadCSV').addEventListener('click', ()=>downloadCSV(STATE.orders.map(o=>({ id:o.id, total:o.total, date:o.createdAt, by:getUserName(o.by), status:o.paymentStatus })), 'orders.csv'));
+    $('#addWarehouseBtn') && $('#addWarehouseBtn').addEventListener('click', addWarehouseHandler);
+    $('#refreshReports') && $('#refreshReports').addEventListener('click', ()=>{ renderReports(); });
+    $('#reportsWarehouseFilter') && $('#reportsWarehouseFilter').addEventListener('change', ()=>{ renderReports(); });
+    // search/sort select
+    $('#sortBy').addEventListener('change', ()=>{ applyGlobalSearch(); });
+  }
+  function login(){ const username = $('#loginUsername').value.trim(); const password = $('#loginPassword').value; const role = $('#loginRole').value; const u = STATE.users.find(x=>x.username===username && x.password===password && x.role===role); if(!u){ $('#loginError').classList.remove('hidden'); return; } $('#loginError').classList.add('hidden'); STATE.currentUser = u; pushActivity('Login: '+u.username+' ('+u.role+')'); save(); renderAll(); if(u.role==='admin' || u.role==='seller') navigate('products'); else navigate('home'); }
+  function logout(){ if(STATE.currentUser) pushActivity('Logout: '+STATE.currentUser.username); STATE.currentUser = null; save(); CART = []; navigateToLogin(); }
+  function navigateToLogin(){ hideAllViews(); $('#view-login').classList.remove('hidden'); $('#sidebar').classList.add('hidden'); }
+  function hideAllViews(){ ['home','products','add','orders','reports','analytics','seller'].forEach(v=>{ const el = document.getElementById('view-'+v); if(el) el.classList.add('hidden'); }); document.getElementById('view-login') && document.getElementById('view-login').classList.add('hidden'); }
+  function navigate(view){ if(!STATE.currentUser && view!=='home' && view!=='reports'){ navigateToLogin(); return; } hideAllViews(); const el = document.getElementById('view-'+view); if(el) el.classList.remove('hidden'); updateRoleUI(); if(view==='products') renderManageTable(); if(view==='home') renderProductsGrid(STATE.products); if(view==='orders') renderOrdersTable(); if(view==='analytics') updateDashboardCheat(); if(view==='reports') renderReports(); if(view==='seller') renderSellerDashboard(); }
+  function showHome(){ hideAllViews(); document.getElementById('view-home').classList.remove('hidden'); updateRoleUI(); renderProductsGrid(STATE.products); }
+  function updateRoleUI(){ const role = STATE.currentUser ? STATE.currentUser.role : 'guest'; $('#showAddBtn') && ($('#showAddBtn').style.display = (role==='admin' || role==='seller') ? 'inline-block' : 'none'); $('#searchWrap').style.display = (role!=='guest') ? 'flex' : 'none'; if(STATE.currentUser) $('#sidebar').classList.remove('hidden'); lucide.createIcons(); }
+  function renderAll(){ fillCategoryFilter(); renderProductsGrid(STATE.products); renderManageTable(); renderRecent(); renderCounters(); updateBadges(); updateDashboardCheat(); fillReportsWarehouseFilter(); if(!STATE.currentUser) navigateToLogin(); else showHome(); }
+  function fillCategoryFilter(){ const sel = $('#filterCategory'); if(!sel) return; const cats = Array.from(new Set(STATE.products.map(p=>p.category))).sort(); sel.innerHTML = '<option value="">All categories</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join(''); }
+  function renderProductsGrid(list){ const grid = $('#productGrid'); if(!grid) return; grid.innerHTML = ''; list.forEach(p=>{ const card = document.createElement('div'); card.className = "bg-white rounded-lg shadow overflow-hidden"; card.innerHTML = `
+      <img src="${p.image}" class="w-full h-40 object-cover"/>
+      <div class="p-3">
+        <div class="font-semibold">${p.name}</div>
+        <div class="text-sm text-gray-500">${p.category}</div>
+        <div class="mt-2 flex items-center justify-between"><div class="font-bold">₹${p.price}</div><div class="text-sm ${p.stock<5? 'text-red-600':'text-gray-600'}">Stock: ${p.stock}</div></div>
+        <div class="mt-3 flex gap-2">
+          <button class="px-3 py-1 bg-primary text-white rounded add-to-cart" data-id="${p.id}">Add to Cart</button>
+          <button class="px-3 py-1 border rounded view-btn" data-id="${p.id}">View</button>
+          <button class="px-3 py-1 border rounded wish-btn" data-id="${p.id}">♡</button>
+        </div>
+      </div>`; grid.appendChild(card); }); $('#productCount') && ($('#productCount').textContent = list.length); bindProductGridButtons(); }
+  function bindProductGridButtons(){ $$('.add-to-cart').forEach(b=>{ b.removeEventListener('click', addClickHandler); b.addEventListener('click', addClickHandler); }); $$('.view-btn').forEach(b=>{ b.removeEventListener('click', viewClickHandler); b.addEventListener('click', viewClickHandler); }); $$('.wish-btn').forEach(b=>{ b.removeEventListener('click', wishClickHandler); b.addEventListener('click', wishClickHandler); }); }
+  function addClickHandler(e){ const id=e.currentTarget.dataset.id; addToCartById(id); }
+  function viewClickHandler(e){ const id=e.currentTarget.dataset.id; openProductQuickView(id); }
+  function wishClickHandler(e){ const id=e.currentTarget.dataset.id; toggleWishlist(id); }
+  function renderManageTable(){ const table = $('#manageTable'); if(!table) return; const role = STATE.currentUser ? STATE.currentUser.role : 'guest'; const list = (role==='seller') ? STATE.products.filter(p=>p.owner===STATE.currentUser.id) : STATE.products; table.innerHTML = `<table class="min-w-full"><thead><tr class="text-left"><th>Name</th><th>Cat</th><th>Price</th><th>Stock</th><th>Sold</th><th>Warehouse</th><th>Actions</th></tr></thead><tbody>${list.map(p => `<tr class="border-t"><td>${p.name}</td><td>${p.category}</td><td>₹${p.price}</td><td>${p.stock}</td><td>${p.sold||0}</td><td>${(STATE.warehouses.find(w=>w.id===p.warehouse)||{name:'N/A'}).name}</td><td><button data-id="${p.id}" class="edit-row px-2 py-1 border rounded">Edit</button> <button data-id="${p.id}" class="delete-row px-2 py-1 border rounded">Delete</button></td></tr>`).join('')}</tbody></table>`; setTimeout(()=>{ $$('.edit-row').forEach(b=>b.addEventListener('click',(e)=>{ startEdit(e.currentTarget.dataset.id); })); $$('.delete-row').forEach(b=>b.addEventListener('click',(e)=>{ if(confirm('Delete product?')){ STATE.products = STATE.products.filter(x=>x.id!==e.currentTarget.dataset.id); pushActivity('Deleted product '+e.currentTarget.dataset.id); save(); renderAll(); } })); },10); }
+  function renderOrdersTable(){ const el = $('#ordersTable'); if(!el) return; if(STATE.orders.length===0) { el.innerHTML = '<div class="text-sm text-gray-500">No orders yet.</div>'; return; } el.innerHTML = '<div class="space-y-3">' + STATE.orders.map(o=>`<div class="bg-white p-3 rounded shadow"><div class="flex justify-between"><div><b>Order ${o.id}</b><div class="text-sm text-gray-500">${o.createdAt} - by ${getUserName(o.by)}</div></div><div class="text-right">₹${o.total} <div class="text-xs mt-1">${o.paymentStatus||'unknown'}</div></div></div><div class="mt-2 text-sm">${o.items.map(i=>`${i.name} x${i.qty}`).join(', ')}</div><div class="mt-3 flex gap-2"><button data-order="${o.id}" class="px-3 py-1 border rounded generate-invoice">Generate Invoice</button><button data-order="${o.id}" class="px-3 py-1 bg-primary text-white rounded simulate-pay">Simulate Payment</button></div></div>`).join('') + '</div>'; setTimeout(()=>{ $$('.generate-invoice').forEach(b=>b.addEventListener('click', e=>{ generateInvoice(e.currentTarget.dataset.order); })); $$('.simulate-pay').forEach(b=>b.addEventListener('click', e=>{ openPaymentGateway(e.currentTarget.dataset.order); })); },10); }
+  function renderRecent(){ const ul = $('#recentList'); if(!ul) return; ul.innerHTML = ''; STATE.activity.slice().reverse().slice(0,8).forEach(a=>{ ul.innerHTML += `<li class="text-sm">${a}</li>`; }); }
+  function renderCounters(){ animateCounter('counterProducts', STATE.products.length); animateCounter('counterLow', STATE.products.filter(p=>p.stock<5).length); animateCounter('counterOrders', STATE.orders.length); }
+  function saveProductFromForm(){ const id = $('#editId').value || ('p'+Date.now()); const p = { id, name: $('#fName').value.trim() || 'Unnamed', category: $('#fCategory').value.trim() || 'Uncategorized', price: Number($('#fPrice').value) || 0, stock: Number($('#fStock').value) || 0, image: $('#fImage').value.trim() || ('https://placehold.co/300x200/ccc/fff?text='+encodeURIComponent($('#fName').value||'Item')), owner: STATE.currentUser ? STATE.currentUser.id : 'u_seller', sold: 0, cost: Math.round((Number($('#fPrice').value)||0) * 0.6), warehouse: (STATE.warehouses[0] && STATE.warehouses[0].id) || null }; const existing = STATE.products.find(x=>x.id===id); if(existing){ Object.assign(existing,p); pushActivity('Product updated: '+p.name); } else { STATE.products.unshift(p); pushActivity('Product added: '+p.name); } save(); renderAll(); navigate('products'); $('#productForm').reset(); $('#editId').value=''; }
+  function startEdit(id){ const p = STATE.products.find(x=>x.id===id); if(!p) return; $('#editId').value = p.id; $('#fName').value=p.name; $('#fCategory').value=p.category; $('#fPrice').value=p.price; $('#fStock').value=p.stock; $('#fImage').value=p.image; navigate('add'); }
+  function cancelEdit(){ $('#editId').value=''; $('#productForm').reset(); navigate('products'); }
+  function addToCartById(id){ const p = STATE.products.find(x=>x.id===id); if(!p) return; const existing = CART.find(c=>c.id===id); if(existing) existing.qty++; else CART.push({ id:p.id, name:p.name, price:p.price, qty:1 }); pushActivity('Added to cart: '+p.name); updateCartUI(); }
+  function updateCartUI(){ $('#cartBadge').textContent = CART.reduce((s,i)=>s+i.qty,0); const container = $('#cartItemsContainer'); container.innerHTML = CART.map(c=>`<div class="flex justify-between items-center mb-2"><div><div class="font-medium">${c.name}</div><div class="text-sm text-gray-500">₹${c.price} x ${c.qty}</div></div><div class="flex gap-2"><button data-id="${c.id}" class="dec px-2 py-1 border rounded">-</button><button data-id="${c.id}" class="inc px-2 py-1 border rounded">+</button></div></div>`).join(''); $$('.inc').forEach(b=>b.addEventListener('click', e=>{ const id=e.currentTarget.dataset.id; const it=CART.find(x=>x.id===id); it.qty++; updateCartUI(); })); $$('.dec').forEach(b=>b.addEventListener('click', e=>{ const id=e.currentTarget.dataset.id; const it=CART.find(x=>x.id===id); it.qty--; if(it.qty<=0) CART.splice(CART.findIndex(x=>x.id===id),1); updateCartUI(); })); $('#cartTotal').textContent = '₹'+CART.reduce((s,i)=>s + i.qty*i.price,0); }
+  function openCart(){ $('#cartDrawer').classList.remove('translate-x-full'); updateCartUI(); }
+  function closeCart(){ $('#cartDrawer').classList.add('translate-x-full'); }
+  function placeOrder(){ if(CART.length===0){ showModal('Cart empty','Please add items'); return; } if(!STATE.currentUser || STATE.currentUser.role!=='buyer'){ showModal('Login required','Please login as buyer to place orders'); return; } const order = { id:'o'+Date.now(), items: JSON.parse(JSON.stringify(CART)), total: CART.reduce((s,i)=>s+i.qty*i.price,0), createdAt: now(), by: STATE.currentUser.id, paymentStatus:'unpaid' }; STATE.orders.push(order); // create a payment entry as unpaid/pending (simulate)
+    const pay = { id:'pay'+Date.now(), orderId:order.id, amount: order.total, method:'cash', status:'pending', createdAt: now() };
+    STATE.payments.push(pay);
+    CART.forEach(ci=>{ const p = STATE.products.find(x=>x.id===ci.id); if(p){ p.stock = Math.max(0, p.stock - ci.qty); p.sold = (p.sold||0) + ci.qty; } });
+    CART = []; pushActivity('Order placed: '+order.id); save(); renderAll(); updateCartUI(); closeCart(); showModal('Order placed', 'Order '+order.id+' created — Total ₹'+order.total); }
+  // payments helper: mark payment as paid for simulation
+  function markPaymentPaid(paymentId){ const p = STATE.payments.find(x=>x.id===paymentId); if(!p) return; p.status = 'paid'; const ord = STATE.orders.find(o=>o.id===p.orderId); if(ord) ord.paymentStatus = 'paid'; pushActivity('Payment received: '+p.id); save(); renderReports(); renderOrdersTable(); }
+  // simulate a payment gateway flow (fake)
+  function openPaymentGateway(orderId){ const order = STATE.orders.find(o=>o.id===orderId); if(!order) return; showModal('Payment Gateway — Simulation', `<div class="p-2"><div class="mb-2">Order <b>${orderId}</b> — Total ₹${order.total}</div><div class="flex gap-2"><button id="pay_card" class="px-3 py-1 border rounded">Pay by Card</button><button id="pay_upi" class="px-3 py-1 border rounded">Pay by UPI</button><button id="pay_cod" class="px-3 py-1 border rounded">Cash on delivery</button></div></div>`); setTimeout(()=>{ document.getElementById('pay_card').addEventListener('click', ()=>completeSimulatedPayment(orderId,'card')); document.getElementById('pay_upi').addEventListener('click', ()=>completeSimulatedPayment(orderId,'upi')); document.getElementById('pay_cod').addEventListener('click', ()=>completeSimulatedPayment(orderId,'cash')); },50); }
+  function completeSimulatedPayment(orderId,method){ const pay = STATE.payments.find(p=>p.orderId===orderId); if(pay){ pay.status = 'paid'; pay.method = method; } const ord = STATE.orders.find(o=>o.id===orderId); if(ord) ord.paymentStatus = 'paid'; pushActivity('Simulated payment for '+orderId+' via '+method); save(); closeModal(); renderReports(); renderOrdersTable(); }
+  function pushActivity(msg){ STATE.activity.push(now()+' — '+msg); renderRecent(); updateBadges(); save(); }
+  function startActivityAutoUpdate(){ setInterval(()=>{ const sample = [ 'Supplier shipment received', 'Price updated by admin', 'New user sign-up' ]; const pick = sample[Math.floor(Math.random()*sample.length)]; pushActivity(pick); }, 45000); }
+  startActivityAutoUpdate();
+  function applyGlobalSearch(){ const q = $('#globalSearch').value.trim().toLowerCase(); const sort = $('#sortBy').value; let list = STATE.products.slice(); if(q) list = list.filter(p=> (p.name+p.category+String(p.price)).toLowerCase().includes(q)); if(sort==='price_asc') list.sort((a,b)=>a.price-b.price); if(sort==='price_desc') list.sort((a,b)=>b.price-a.price); if(sort==='sold_desc') list.sort((a,b)=> (b.sold||0)-(a.sold||0)); renderProductsGrid(list); }
+  function applyQuickSearch(){ const q = $('#quickSearch').value.trim().toLowerCase(); if(!q) return renderProductsGrid(STATE.products); const list = STATE.products.filter(p=> (p.name+p.category+String(p.price)).toLowerCase().includes(q)); renderProductsGrid(list); pushActivity('Searched: '+q); }
+  function applyFilters(){ const cat = $('#filterCategory').value; const min = Number($('#filterMinPrice').value)||0; const max = Number($('#filterMaxPrice').value)||Infinity; const lowOnly = $('#filterLowStock').checked; let list = STATE.products.slice(); if(cat) list = list.filter(p=>p.category===cat); list = list.filter(p=> p.price>=min && p.price<=max); if(lowOnly) list = list.filter(p=>p.stock<5); renderProductsGrid(list); }
+  function calculateProfitLoss(){ let totalProfit = 0; let totalLoss = 0; STATE.products.forEach(p=>{ const sold = p.sold || 0; const revenue = sold * (p.price || 0); const costOfGoods = sold * (p.cost || Math.round((p.price||0)*0.6)); totalProfit += (revenue - costOfGoods); totalLoss += (p.stock || 0) * ( (p.cost || Math.round((p.price||0)*0.6)) * 0.05 ); }); totalProfit = Math.round(totalProfit); totalLoss = Math.round(totalLoss); return { totalProfit, totalLoss }; }
+  function demandAnalysis(){ const bySold = STATE.products.slice().sort((a,b)=> (b.sold||0) - (a.sold||0)); const high = bySold[0] || null; const low = bySold[bySold.length-1] || null; const topList = bySold.slice(0,5); const lowList = bySold.slice(-5).reverse(); return { high, low, topList, lowList }; }
+  function updateDashboardCheat(){ const { totalProfit, totalLoss } = calculateProfitLoss(); const { high, low, topList, lowList } = demandAnalysis(); $('#statProfit').textContent = '₹' + totalProfit; $('#statLoss').textContent = '₹' + totalLoss; $('#statHigh').textContent = high ? `${high.name} (${high.sold||0})` : '—'; $('#statLow').textContent = low ? `${low.name} (${low.sold||0})` : '—'; }
+  function animateCounter(id, target){ const el = document.getElementById(id); if(!el) return; const start = Number(el.textContent) || 0; const duration = 600; const startTime = performance.now(); function step(nowT){ const passed = Math.min(1,(nowT-startTime)/duration); const val = Math.floor(start + (target-start)*passed); el.textContent = val; if(passed<1) requestAnimationFrame(step); else el.textContent = target; } requestAnimationFrame(step); }
+  function updateBadges(){ $('#ordersBadge').textContent = STATE.orders.length; $('#cartBadge').textContent = CART.reduce((s,i)=>s+i.qty,0); $('#wishBadge').textContent = STATE.wishlist.length; $('#productCount') && ($('#productCount').textContent = STATE.products.length); }
+  function getUserName(id){ const u = STATE.users.find(x=>x.id===id); return u ? u.name : id; }
+  function openProductQuickView(id){ const p = STATE.products.find(x=>x.id===id); if(!p) return; showModal(p.name, `<div class="flex gap-4"><img src="${p.image}" class="w-32 h-24 object-cover"/><div><div class="font-bold">₹${p.price}</div><div class="text-sm text-gray-500">${p.category}</div><div class="mt-2">Stock: ${p.stock}</div><div class="mt-3"><button id="modalAddNow" class="px-3 py-1 bg-primary text-white rounded">Add to cart</button></div></div></div>`); setTimeout(()=>{ const btn = document.getElementById('modalAddNow'); if(btn) btn.addEventListener('click', ()=>{ addToCartById(p.id); closeModal(); }); },50); }
+  function showModal(title, body){ $('#modalTitle').textContent = title; $('#modalBody').innerHTML = body; $('#modal').classList.remove('hidden'); lucide.createIcons(); }
+  function closeModal(){ $('#modal').classList.add('hidden'); }
+  function startHeroAutoplay(){ const slides = Array.from(document.querySelectorAll('.hero-slide')); if(!slides.length) return; let idx=0; setInterval(()=>{ slides[idx].classList.remove('active'); idx=(idx+1)%slides.length; slides[idx].classList.add('active'); },4000); }
+  // Wishlist
+  function toggleWishlist(id){ const idx = STATE.wishlist.indexOf(id); if(idx===-1){ STATE.wishlist.push(id); pushActivity('Added to wishlist: '+id); } else { STATE.wishlist.splice(idx,1); pushActivity('Removed from wishlist: '+id); } save(); renderWish(); updateBadges(); }
+  function renderWish(){ const container = $('#wishItemsContainer'); container.innerHTML = STATE.wishlist.map(id=>{ const p = STATE.products.find(x=>x.id===id); return `<div class="flex justify-between items-center mb-2"><div><div class="font-medium">${p.name}</div><div class="text-sm text-gray-500">₹${p.price}</div></div><div><button data-id="${p.id}" class="add-from-wish px-3 py-1 bg-primary text-white rounded">Add</button></div></div>`; }).join(''); $$('.add-from-wish').forEach(b=>b.addEventListener('click', e=>{ addToCartById(e.currentTarget.dataset.id); })); }
+  function openWish(){ $('#wishDrawer').classList.remove('translate-x-full'); renderWish(); }
+  function closeWish(){ $('#wishDrawer').classList.add('translate-x-full'); }
+  // Reports / Transactions
+  function fillReportsWarehouseFilter(){
+    const sel = $('#reportsWarehouseFilter');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">All warehouses</option>' + (STATE.warehouses || []).map(w=>`<option value="${w.id}">${w.name}</option>`).join('');
+  }
+  function renderReports(){
+    // Summary numbers
+    $('#rTotalProducts').textContent = STATE.products.length;
+    $('#rTotalCategories').textContent = Array.from(new Set(STATE.products.map(p=>p.category))).length;
+    $('#rWarehouses').textContent = STATE.warehouses.length;
+    $('#rTotalTransactions').textContent = STATE.orders.length;
+    const paidCount = STATE.orders.filter(o=>o.paymentStatus==='paid').length;
+    const unpaidCount = STATE.orders.filter(o=>o.paymentStatus!=='paid').length;
+    $('#rPaidOrders').textContent = paidCount;
+    $('#rUnpaidOrders').textContent = unpaidCount;
+    // Pending cash payments
+    const pendingCash = STATE.payments.filter(p=>p.method==='cash' && p.status==='pending').length;
+    $('#rPendingCash').textContent = pendingCash;
+    // Transactions table (orders)
+    const warehouseFilter = $('#reportsWarehouseFilter').value;
+    let ordersList = STATE.orders.slice().reverse();
+    if(warehouseFilter){
+      ordersList = ordersList.filter(o => o.items.some(i => {
+        const prod = STATE.products.find(p => p.id === i.id);
+        return prod && prod.warehouse === warehouseFilter;
+      }));
+    }
+    const tbody = ordersList.length === 0 ? '<div class="text-sm text-gray-500 p-2">No transactions.</div>' : `<table class="min-w-full"><thead><tr class="text-left"><th>Order</th><th>By</th><th>Total</th><th>Payment</th><th>Items</th><th>Date</th><th>Action</th></tr></thead><tbody>${ordersList.map(o => `<tr class="border-t"><td>${o.id}</td><td>${getUserName(o.by)}</td><td>₹${o.total}</td><td>${o.paymentStatus||'unknown'}</td><td>${o.items.map(i=>i.name+' x'+i.qty).join(', ')}</td><td>${o.createdAt}</td><td><button data-order="${o.id}" class="generate-invoice px-2 py-1 border rounded mr-2">Invoice</button><button data-order="${o.id}" class="simulate-pay px-2 py-1 bg-primary text-white rounded">Pay</button></td></tr>`).join('')}</tbody></table>`;
+    $('#transactionsTable').innerHTML = tbody;
+    // Payments table
+    const payments = STATE.payments.slice().reverse();
+    const pbody = payments.length === 0 ? '<div class="text-sm text-gray-500 p-2">No payments.</div>' : `<table class="min-w-full"><thead><tr class="text-left"><th>ID</th><th>Order</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody>${payments.map(p => `<tr class="border-t"><td>${p.id}</td><td>${p.orderId}</td><td>₹${p.amount}</td><td>${p.method}</td><td>${p.status}</td><td>${p.createdAt}</td><td>${p.status!=='paid' ? `<button data-pay="${p.id}" class="mark-paid px-2 py-1 border rounded">Mark Paid</button>` : ''}</td></tr>`).join('')}</tbody></table>`;
+    $('#paymentsTable').innerHTML = pbody;
+    setTimeout(()=>{ $$('.mark-paid').forEach(b=>b.addEventListener('click', e=>{ markPaymentPaid(e.currentTarget.dataset.pay); })); $$('.generate-invoice').forEach(b=>b.addEventListener('click', e=>{ generateInvoice(e.currentTarget.dataset.order); })); $$('.simulate-pay').forEach(b=>b.addEventListener('click', e=>{ openPaymentGateway(e.currentTarget.dataset.order); })); },10);
+    // Warehouses table
+    const wh = STATE.warehouses || [];
+    const whBody = wh.length === 0 ? '<div class="text-sm text-gray-500 p-2">No warehouses.</div>' : `<table class="min-w-full"><thead><tr class="text-left"><th>Name</th><th>Location</th><th>#Products</th><th>Action</th></tr></thead><tbody>${wh.map(w=>`<tr class="border-t"><td>${w.name}</td><td>${w.location}</td><td>${STATE.products.filter(p=>p.warehouse===w.id).length}</td><td><button data-wh="${w.id}" class="del-wh px-2 py-1 border rounded text-red-600">Delete</button></td></tr>`).join('')}</tbody></table>`;
+    $('#warehousesTable').innerHTML = whBody;
+    setTimeout(()=>{ $$('.del-wh').forEach(b=>b.addEventListener('click', e=>{ if(confirm('Delete warehouse?')){ STATE.warehouses = STATE.warehouses.filter(w=>w.id!==e.currentTarget.dataset.wh); save(); renderReports(); } })); },10);
+    updateBadges();
+    lucide.createIcons();
+  }
+  // Generate a printable invoice window (user can print to PDF)
+  function generateInvoice(orderId){ const ord = STATE.orders.find(o=>o.id===orderId); if(!ord) return; const sellerName = STATE.users.find(u=>u.id===ord.by)?.name || getUserName(ord.by);
+    let html = `<html><head><title>Invoice ${ord.id}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}td,th{padding:8px;border:1px solid #ddd}</style></head><body>`;
+    html += `<h2>Invoice — ${ord.id}</h2><div><b>Date:</b> ${ord.createdAt}</div><div><b>Customer:</b> ${getUserName(ord.by)}</div><br>`;
+    html += `<table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>`;
+    ord.items.forEach(i=>{ html += `<tr><td>${i.name}</td><td>${i.qty}</td><td>₹${i.price}</td><td>₹${i.qty*i.price}</td></tr>`; });
+    html += `</tbody></table><h3>Total: ₹${ord.total}</h3><p>Payment status: ${ord.paymentStatus}</p>`;
+    html += `<div style="margin-top:30px">Generated by IMS Demo</div></body></html>`;
+    const w = window.open('', '_blank'); w.document.write(html); w.document.close(); // user can print/save as PDF
+  }
+  function downloadCSV(arr, filename){ if(!arr || !arr.length){ alert('No data to export'); return; } const keys = Object.keys(arr[0]); const lines = [keys.join(',')]; arr.forEach(r=>{ lines.push(keys.map(k=>`"${String(r[k]||'').replace(/"/g,'""')}"`).join(',')); }); const blob = new Blob([lines.join('\n')], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+  function addWarehouseHandler(){ const name = $('#newWHName').value.trim(); const loc = $('#newWHLocation').value.trim(); if(!name || !loc) return alert('Please provide name and location'); const id = 'w'+Date.now(); STATE.warehouses.push({ id, name, location:loc }); pushActivity('Added warehouse: '+name); save(); $('#newWHName').value=''; $('#newWHLocation').value=''; renderReports(); fillReportsWarehouseFilter(); }
+  // Utilities
+  function navigateToLogin(){ hideAllViews(); $('#view-login').classList.remove('hidden'); $('#sidebar').classList.add('hidden'); }
+  // Seller dashboard
+  function renderSellerDashboard(){ if(!STATE.currentUser) return navigateToLogin(); const my = STATE.products.filter(p=>p.owner===STATE.currentUser.id); $('#sTotalProducts').innerText = my.length; $('#sLowStock').innerText = my.filter(p=>p.stock<5).length; const sales = STATE.orders.reduce((sum,o)=>{ return sum + o.items.filter(i=> my.some(m=>m.id===i.id)).reduce((s,i)=>s + i.qty*i.price,0); },0); $('#sTotalSales').innerText = '₹'+sales; let html = `<table class="min-w-full"><thead class="bg-gray-50"><tr><th class="p-2">Name</th><th class="p-2">Stock</th><th class="p-2">Sold</th><th class="p-2">Warehouse</th></tr></thead><tbody>`; my.forEach(p=>{ html += `<tr class="border-t"><td class="p-2">${p.name}</td><td class="p-2">${p.stock}</td><td class="p-2">${p.sold||0}</td><td class="p-2">${(STATE.warehouses.find(w=>w.id===p.warehouse)||{name:'N/A'}).name}</td></tr>`; }); html += `</tbody></table>`; $('#sellerProducts').innerHTML = html; }
+  // initialize reports filter values, etc
+  renderAll();
+  window.STATE = STATE; window.saveState = save; window.loadState = load; window.addToCartById = addToCartById; window.placeOrder = placeOrder; window.navigate = navigate; window.showModal = showModal;
+// Barcode scanner (uses BarcodeDetector when available)
+// ----------------------
+let scannerStream = null;
+let scannerInterval = null;
+async function openScanner() {
+scannerModal.classList.remove('hidden');
+detectedList.innerHTML = '';
+scannerMsg.textContent = 'Starting camera...';
+try {
+scannerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+scannerVideo.srcObject = scannerStream;
+scannerVideo.play();
+if ('BarcodeDetector' in window) {
+const formats = BarcodeDetector.getSupportedFormats();
+const detector = new BarcodeDetector({ formats });
+scannerMsg.textContent = 'Scanning with BarcodeDetector...';
+scannerInterval = setInterval(async () => {
+try {
+const bitmap = await createImageBitmap(scannerVideo);
+const codes = await detector.detect(bitmap);
+bitmap.close();
+for (const c of codes) {
+addDetected(c.rawValue || c.rawValue);
+}
+} catch (err) { /* ignore frame errors */ }
+}, 700);
+} else {
+// simple fallback: attempt read from video frames with canvas + js decode library not included
+scannerMsg.textContent = 'Browser does not support BarcodeDetector; show code manually or copy product id.';
+}
+} catch (err) {
+scannerMsg.textContent = 'Camera access denied or unavailable: ' + err.message;
+}
+}
+function addDetected(text) {
+// avoid duplicates
+const exists = Array.from(detectedList.children).some(li => li.textContent === text);
+if (exists) return;
+const li = document.createElement('li');
+li.textContent = text;
+detectedList.appendChild(li);
+// if detected text matches a product id, open a quick modal for the product
+const prod = STATE.products.find(p => (p.id && p.id.toString()) === text.toString());
+if (prod) {
+openModal('Product scanned: ' + escapeHtml(prod.name), `<div><img src=\"${prod.images && prod.images[0]}\" class=\"w-32 h-24 object-cover rounded\" /><div class=\"mt-2\">Price: ₹${prod.price}</div></div>`);
+}
+}
+async function closeScanner() {
+scannerModal.classList.add('hidden');
+if (scannerInterval) { clearInterval(scannerInterval); scannerInterval = null; }
+if (scannerVideo) { try { scannerVideo.pause(); scannerVideo.srcObject = null; } catch(e){} }
+if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+} 
+  </script>
+</body>
+</html>
